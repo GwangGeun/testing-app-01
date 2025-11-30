@@ -1,0 +1,542 @@
+openapi: 3.0.3
+info:
+  title: Demo Booking API
+  description: |
+    A Spring Boot REST API for managing user authentication and hotel bookings.
+
+    Features:
+    - User registration and authentication
+    - Booking management (create, update, cancel, retrieve)
+    - In-memory data storage
+
+    **Note**: This is a demo API with minimal security. Not suitable for production use.
+  version: 1.0.0
+  contact:
+    name: API Support
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: User registration, login, and profile management
+  - name: Bookings
+    description: Booking management operations
+
+paths:
+  /signup:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Create a new user account with email, name, and password
+      operationId: signUp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+            examples:
+              validSignUp:
+                summary: Valid sign up request
+                value:
+                  email: user@example.com
+                  name: John Doe
+                  password: securePassword123
+      responses:
+        '200':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  summary: Successful registration
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    email: user@example.com
+                    name: John Doe
+        '400':
+          description: Bad request - Email already exists or invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /signin:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate a user
+      description: Sign in with email and password credentials
+      operationId: signIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+            examples:
+              validSignIn:
+                summary: Valid sign in request
+                value:
+                  email: user@example.com
+                  password: securePassword123
+      responses:
+        '200':
+          description: User successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  summary: Successful authentication
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    email: user@example.com
+                    name: John Doe
+        '400':
+          description: Bad request - Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /profile/{email}:
+    get:
+      tags:
+        - Authentication
+      summary: Get user profile
+      description: Retrieve user profile information by email
+      operationId: getProfile
+      parameters:
+        - name: email
+          in: path
+          required: true
+          description: User's email address
+          schema:
+            type: string
+            format: email
+          example: user@example.com
+        - name: email
+          in: query
+          required: true
+          description: User's email address (query parameter)
+          schema:
+            type: string
+            format: email
+          example: user@example.com
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+              examples:
+                success:
+                  summary: User profile
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    email: user@example.com
+                    name: John Doe
+        '400':
+          description: Bad request - User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /bookings:
+    post:
+      tags:
+        - Bookings
+      summary: Create a new booking
+      description: |
+        Create a new booking for a registered user.
+
+        Validation rules:
+        - User must exist (identified by email)
+        - Check-in date must be before check-out date
+        - Check-in date must be in the future
+      operationId: createBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+            examples:
+              validBooking:
+                summary: Valid booking request
+                value:
+                  email: user@example.com
+                  checkIn: 2025-12-01T15:00:00
+                  checkOut: 2025-12-05T11:00:00
+      responses:
+        '200':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+              examples:
+                success:
+                  summary: Successful booking
+                  value:
+                    id: 660e8400-e29b-41d4-a716-446655440000
+                    memberEmail: user@example.com
+                    memberName: John Doe
+                    checkIn: 2025-12-01T15:00:00
+                    checkOut: 2025-12-05T11:00:00
+        '400':
+          description: Bad request - Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - Bookings
+      summary: Get all bookings or filter by email
+      description: |
+        Retrieve all bookings or filter by user email.
+
+        - If email parameter is provided: returns bookings for that user
+        - If no parameter: returns all bookings
+      operationId: getBookings
+      parameters:
+        - name: email
+          in: query
+          required: false
+          description: Filter bookings by user email
+          schema:
+            type: string
+            format: email
+          example: user@example.com
+      responses:
+        '200':
+          description: Bookings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+              examples:
+                allBookings:
+                  summary: All bookings
+                  value:
+                    bookings:
+                      - id: 660e8400-e29b-41d4-a716-446655440000
+                        memberEmail: user@example.com
+                        memberName: John Doe
+                        checkIn: 2025-12-01T15:00:00
+                        checkOut: 2025-12-05T11:00:00
+                      - id: 770e8400-e29b-41d4-a716-446655440000
+                        memberEmail: user2@example.com
+                        memberName: Jane Smith
+                        checkIn: 2025-12-10T14:00:00
+                        checkOut: 2025-12-15T10:00:00
+                filteredBookings:
+                  summary: Filtered by email
+                  value:
+                    bookings:
+                      - id: 660e8400-e29b-41d4-a716-446655440000
+                        memberEmail: user@example.com
+                        memberName: John Doe
+                        checkIn: 2025-12-01T15:00:00
+                        checkOut: 2025-12-05T11:00:00
+        '400':
+          description: Bad request - Invalid email or error retrieving bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /bookings/{bookingId}:
+    get:
+      tags:
+        - Bookings
+      summary: Get a specific booking
+      description: Retrieve booking details by booking ID
+      operationId: getBooking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          description: Unique booking identifier
+          schema:
+            type: string
+            format: uuid
+          example: 660e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Booking retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+              examples:
+                success:
+                  summary: Booking details
+                  value:
+                    id: 660e8400-e29b-41d4-a716-446655440000
+                    memberEmail: user@example.com
+                    memberName: John Doe
+                    checkIn: 2025-12-01T15:00:00
+                    checkOut: 2025-12-05T11:00:00
+        '400':
+          description: Bad request - Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Bookings
+      summary: Amend an existing booking
+      description: |
+        Update check-in and check-out dates for an existing booking.
+
+        Validation rules:
+        - Booking must exist
+        - Check-in date must be before check-out date
+        - Check-in date must be in the future
+      operationId: amendBooking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          description: Unique booking identifier
+          schema:
+            type: string
+            format: uuid
+          example: 660e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmendBookingRequest'
+            examples:
+              validAmendment:
+                summary: Valid amendment request
+                value:
+                  checkIn: 2025-12-02T15:00:00
+                  checkOut: 2025-12-06T11:00:00
+      responses:
+        '200':
+          description: Booking amended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+              examples:
+                success:
+                  summary: Amended booking
+                  value:
+                    id: 660e8400-e29b-41d4-a716-446655440000
+                    memberEmail: user@example.com
+                    memberName: John Doe
+                    checkIn: 2025-12-02T15:00:00
+                    checkOut: 2025-12-06T11:00:00
+        '400':
+          description: Bad request - Validation failed or booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Bookings
+      summary: Cancel a booking
+      description: Delete/cancel an existing booking
+      operationId: cancelBooking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          description: Unique booking identifier
+          schema:
+            type: string
+            format: uuid
+          example: 660e8400-e29b-41d4-a716-446655440000
+      responses:
+        '204':
+          description: Booking cancelled successfully
+        '400':
+          description: Bad request - Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    SignUpRequest:
+      type: object
+      required:
+        - email
+        - name
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (must be unique)
+          example: user@example.com
+        name:
+          type: string
+          description: User's full name
+          example: John Doe
+          minLength: 1
+        password:
+          type: string
+          description: User's password
+          format: password
+          example: securePassword123
+          minLength: 1
+
+    SignInRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: user@example.com
+        password:
+          type: string
+          description: User's password
+          format: password
+          example: securePassword123
+
+    AuthResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: user@example.com
+        name:
+          type: string
+          description: User's full name
+          example: John Doe
+
+    ProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: user@example.com
+        name:
+          type: string
+          description: User's full name
+          example: John Doe
+
+    CreateBookingRequest:
+      type: object
+      required:
+        - email
+        - checkIn
+        - checkOut
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email of the user making the booking
+          example: user@example.com
+        checkIn:
+          type: string
+          format: date-time
+          description: Check-in date and time (must be in the future)
+          example: 2025-12-01T15:00:00
+        checkOut:
+          type: string
+          format: date-time
+          description: Check-out date and time (must be after check-in)
+          example: 2025-12-05T11:00:00
+
+    AmendBookingRequest:
+      type: object
+      required:
+        - checkIn
+        - checkOut
+      properties:
+        checkIn:
+          type: string
+          format: date-time
+          description: New check-in date and time (must be in the future)
+          example: 2025-12-02T15:00:00
+        checkOut:
+          type: string
+          format: date-time
+          description: New check-out date and time (must be after check-in)
+          example: 2025-12-06T11:00:00
+
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique booking identifier
+          example: 660e8400-e29b-41d4-a716-446655440000
+        memberEmail:
+          type: string
+          format: email
+          description: Email of the member who made the booking
+          example: user@example.com
+        memberName:
+          type: string
+          description: Name of the member who made the booking
+          example: John Doe
+        checkIn:
+          type: string
+          format: date-time
+          description: Check-in date and time
+          example: 2025-12-01T15:00:00
+        checkOut:
+          type: string
+          format: date-time
+          description: Check-out date and time
+          example: 2025-12-05T11:00:00
+
+    BookingListResponse:
+      type: object
+      properties:
+        bookings:
+          type: array
+          description: List of bookings
+          items:
+            $ref: '#/components/schemas/BookingResponse'
+
+    Error:
+      type: object
+      description: Error response (currently returns empty response for 400 errors)
+      properties:
+        message:
+          type: string
+          description: Error message
+          example: Bad Request
