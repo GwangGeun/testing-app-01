@@ -1,0 +1,145 @@
+---
+title: "API Reference"
+description: "Complete API documentation for the Demo Booking API"
+---
+
+## Overview
+
+The Demo Booking API is a RESTful API built with Spring Boot that provides user authentication and hotel booking management capabilities.
+
+### Base URL
+
+```
+http://localhost:8080
+```
+
+### Key Features
+
+- User registration and authentication
+- Booking creation and management
+- Real-time booking updates
+- Email-based user profiles
+
+### Authentication
+
+This is a demo API with basic email/password authentication. In production, you should implement:
+- JWT token-based authentication
+- Password hashing (BCrypt/Argon2)
+- HTTPS for secure communication
+
+---
+
+## API Endpoints
+
+<OpenApiPlayground openapi="/openapi.yaml" />
+
+---
+
+## Quick Start
+
+### 1. Register a User
+
+```bash
+curl -X POST http://localhost:8080/signup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "name": "John Doe",
+    "password": "securePassword123"
+  }'
+```
+
+### 2. Sign In
+
+```bash
+curl -X POST http://localhost:8080/signin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+### 3. Create a Booking
+
+```bash
+curl -X POST http://localhost:8080/bookings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "checkIn": "2025-12-01T15:00:00",
+    "checkOut": "2025-12-05T11:00:00"
+  }'
+```
+
+### 4. Get All Bookings
+
+```bash
+curl http://localhost:8080/bookings
+```
+
+### 5. Get Bookings by Email
+
+```bash
+curl "http://localhost:8080/bookings?email=user@example.com"
+```
+
+---
+
+## Data Models
+
+### User/Member
+
+| Field    | Type   | Description           |
+|----------|--------|-----------------------|
+| id       | string | UUID identifier       |
+| email    | string | Unique email address  |
+| name     | string | User's full name      |
+| password | string | User's password       |
+
+### Booking
+
+| Field    | Type         | Description              |
+|----------|--------------|--------------------------|
+| id       | string       | UUID identifier          |
+| member   | MemberEntity | Associated user          |
+| checkIn  | LocalDateTime| Check-in date and time   |
+| checkOut | LocalDateTime| Check-out date and time  |
+
+---
+
+## Response Status Codes
+
+| Code | Description                        |
+|------|------------------------------------|
+| 200  | OK - Request successful            |
+| 204  | No Content - Delete successful     |
+| 400  | Bad Request - Validation error     |
+
+---
+
+## Validation Rules
+
+### Booking Validation
+
+- User must exist in the system
+- Check-in date must be before check-out date
+- Check-in date must be in the future
+- Booking ID must exist for amendments/cancellations
+
+### User Validation
+
+- Email must be unique during registration
+- Email and password must match for sign-in
+- All required fields must be provided
+
+---
+
+## Error Handling
+
+All errors return a `400 Bad Request` status with minimal error details. In a production environment, consider implementing:
+
+- Detailed error messages
+- Error codes for different failure scenarios
+- Proper validation error responses
+- Rate limiting and security measures
